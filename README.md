@@ -1,9 +1,9 @@
-# daily-reading-tracker
+# Daily Reading Tracker
 
-🚀 **Data-Driven Python Projects**
-A collection of utility-focused applications built with Python, Pandas, and Streamlit, emphasizing data persistence, logic-based tracking, and specialized data serialization.
+**Data-Driven Python Project**
+A collection of utility-focused application built with Python, Pandas, and Streamlit, emphasizing data persistence, logic-based tracking, and specialized data serialization.
 
-📖 **Daily and Weekly Bible Reading Trackers**
+**Daily and Weekly Bible Reading Trackers**
 
 **The Problem:** Standard reading plans are passive. **The Solution:** A two-tier tracking system that turns personal habits into quantifiable data.
 
