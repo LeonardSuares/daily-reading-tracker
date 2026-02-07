@@ -34,5 +34,6 @@ Daily-Reading-Tracker/
 ├── main.py                       # Streamlit application logic
 └── requirements.txt               # Dependencies (Pandas, Streamlit, etc.)
 
-## 📄 **License**
+```
+## 📄 License
 This project is licensed under the **MIT License**. This means you are free to use, modify, and distribute the code, provided that the original copyright notice and permission notice are included. See the `LICENSE` file for more details.
