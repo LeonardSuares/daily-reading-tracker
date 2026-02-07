@@ -1,23 +1,23 @@
 import streamlit as st
 import pandas as pd
 import os
+from datetime import datetime
 
 # --- CONFIG ---
 CANONICAL_FILE = 'bible_canonical_progress.csv'
-SESSION_FILE = 'last_session.csv'  # NEW: Tracks the last book/chapter viewed
+SESSION_FILE = 'last_session.csv'
+
 
 def load_canonical_data():
-    # Check if file exists AND is not empty (size > 0 bytes)
+    """Loads progress data or initializes a new Bible structure."""
     if os.path.exists(CANONICAL_FILE) and os.path.getsize(CANONICAL_FILE) > 0:
-        try:
-            return pd.read_csv(CANONICAL_FILE)
-        except pd.errors.EmptyDataError:
-            # This is a fallback in case getsize failed us
-            st.warning("Found an empty file. Re-initializing...")
-            pass
+        df = pd.read_csv(CANONICAL_FILE)
+        # Ensure the Last_Updated column exists in older files
+        if 'Last_Updated' not in df.columns:
+            df['Last_Updated'] = "Never"
+        return df
 
-    # If we are here, the file is either missing or empty
-    # Let's initialize the full Bible structure (all 66 books)
+    # Initialize full Bible structure
     data = {
         'Book': [
             'Genesis', 'Exodus', 'Leviticus', 'Numbers', 'Deuteronomy',
@@ -43,92 +43,108 @@ def load_canonical_data():
             4, 5, 3, 6, 4, 3, 1, 13, 5, 5,
             3, 5, 1, 1, 1, 22
         ],
-        'Chapters_Read': [0] * 66
+        'Chapters_Read': [0] * 66,
+        'Last_Updated': ["Never"] * 66
     }
     df = pd.DataFrame(data)
     df.to_csv(CANONICAL_FILE, index=False)
     return df
 
+
 def get_last_session():
-    """Retrieves the last book and chapter modified."""
+    """Retrieves the last book and chapter modified from disk."""
     if os.path.exists(SESSION_FILE):
         return pd.read_csv(SESSION_FILE).iloc[0].to_dict()
-    # Default to Genesis if no session exists
     return {'Book': 'Genesis', 'Chapter': 0}
 
+
 def save_session(book, chapter):
-    """Saves the current book and chapter to persist on restart."""
+    """Saves current state to disk to persist across app restarts."""
     pd.DataFrame([{'Book': book, 'Chapter': chapter}]).to_csv(SESSION_FILE, index=False)
 
-st.title("📚 Bible Progress")
-df_canon = load_canonical_data()
-last_session = get_last_session() # Load the 'Memory'
 
-# --- OVERALL PROGRESS ---
+# --- APP START ---
+st.set_page_config(page_title="Bible Tracker", layout="wide")
+st.title("📚 Bible Progress Tracker")
+
+df_canon = load_canonical_data()
+last_session_data = get_last_session()
+
+# Initialize Session State for the active book if not already set
+if 'active_book' not in st.session_state:
+    st.session_state.active_book = last_session_data['Book']
+
+# --- OVERALL PROGRESS METRICS ---
 total_chapters_bible = df_canon['Total_Chapters'].sum()
 read_chapters_bible = df_canon['Chapters_Read'].sum()
 overall_pct = (read_chapters_bible / total_chapters_bible) * 100
 
-st.metric("Total Bible Completion", f"{overall_pct:.1f}%", f"{read_chapters_bible}/{total_chapters_bible} Chapters")
+m_col1, m_col2 = st.columns(2)
+m_col1.metric("Overall Completion", f"{overall_pct:.1f}%")
+m_col2.metric("Chapters Read", f"{read_chapters_bible} / {total_chapters_bible}")
 st.progress(overall_pct / 100)
 
 st.markdown("---")
 
-# --- INTERACTIVE CHECKLIST ---
-
-# Initialize session state if it doesn't exist
-if 'active_book' not in st.session_state:
-    st.session_state.active_book = last_session['Book']
-
+# --- INTERACTIVE UPDATE SECTION ---
 col1, col2 = st.columns([1, 2])
 
 with col1:
     book_list = list(df_canon['Book'].unique())
     try:
-        # We find the index based on what is CURRENTLY in session_state
+        # Find index of current active book to keep the selectbox stable
         default_index = book_list.index(st.session_state.active_book)
     except ValueError:
         default_index = 0
 
-    # Every time this changes, it updates st.session_state.active_book
     selected_book = st.selectbox(
-        "Select a Book to Update",
+        "Choose a Book",
         book_list,
         index=default_index,
-        key="book_selector"  # Adding a key helps Streamlit track this specific widget
+        key="book_picker"
     )
 
-    # Update our state tracker
+    # Sync internal state with widget selection
     st.session_state.active_book = selected_book
 
 with col2:
-    book_data = df_canon[df_canon['Book'] == selected_book].iloc[0]
-    current_read = int(book_data['Chapters_Read'])
-    total_chaps = int(book_data['Total_Chapters'])
+    book_row = df_canon[df_canon['Book'] == selected_book].iloc[0]
+    current_chapters = int(book_row['Chapters_Read'])
+    total_chapters = int(book_row['Total_Chapters'])
 
-    # Logic: Only use the session file's chapter if it matches the currently viewed book
-    if selected_book == last_session['Book']:
-        start_val = last_session['Chapter']
+    # Set slider start value: use session file value ONLY if the book matches
+    # Otherwise, use the actual read count from the main dataframe
+    if selected_book == last_session_data['Book']:
+        slider_start = last_session_data['Chapter']
     else:
-        start_val = current_read
+        slider_start = current_chapters
 
-    new_read_count = st.slider(f"Chapters finished in {selected_book}", 0, total_chaps, start_val)
+    new_val = st.slider(f"Progress for {selected_book}", 0, total_chapters, slider_start)
 
-    if st.button(f"Update {selected_book}"):
-        df_canon.loc[df_canon['Book'] == selected_book, 'Chapters_Read'] = new_read_count
+    if st.button(f"Save Progress for {selected_book}", type="primary"):
+        # 1. Update Main Dataframe
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
+        df_canon.loc[df_canon['Book'] == selected_book, 'Chapters_Read'] = new_val
+        df_canon.loc[df_canon['Book'] == selected_book, 'Last_Updated'] = timestamp
         df_canon.to_csv(CANONICAL_FILE, index=False)
 
-        # Update the file so it survives a full app restart/refresh
-        save_session(selected_book, new_read_count)
+        # 2. Update Persistence File
+        save_session(selected_book, new_val)
 
-        # Update the session state so it survives navigation
-        st.session_state.active_book = selected_book
-
-        st.success(f"Updated {selected_book}: {new_read_count}/{total_chaps}")
+        # 3. Success Feedback & Refresh
+        st.success(f"Successfully updated {selected_book} to {new_val} chapters!")
         st.rerun()
 
-# --- VISUAL SUMMARY ---
-st.subheader("Progress by Book")
-df_canon['Pct'] = (df_canon['Chapters_Read'] / df_canon['Total_Chapters']) * 100
-st.dataframe(df_canon[['Book', 'Chapters_Read', 'Total_Chapters', 'Pct']],
-             hide_index=True, use_container_width=True)
+# --- DATA SUMMARY TABLE ---
+st.markdown("---")
+st.subheader("Detailed Progress")
+
+# Add percentage column for the table view
+df_canon['Completion %'] = (df_canon['Chapters_Read'] / df_canon['Total_Chapters'] * 100).round(1)
+
+# We removed the 'df_sorted' line to keep your original Bible order!
+st.dataframe(
+    df_canon[['Book', 'Chapters_Read', 'Total_Chapters', 'Completion %', 'Last_Updated']],
+    hide_index=True,
+    use_container_width=True
+)
