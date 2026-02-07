@@ -33,3 +33,6 @@ Daily-Reading-Tracker/
 ├── last_session.csv              # Session persistence metadata
 ├── main.py                       # Streamlit application logic
 └── requirements.txt               # Dependencies (Pandas, Streamlit, etc.)
+
+## 📄 **License**
+This project is licensed under the **MIT License**. This means you are free to use, modify, and distribute the code, provided that the original copyright notice and permission notice are included. See the `LICENSE` file for more details.
