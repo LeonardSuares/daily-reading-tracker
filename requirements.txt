@@ -1,3 +1,2 @@
 streamlit
 pandas
-# Add any other dependencies your app uses
