@@ -1,67 +1,67 @@
-Book,Total_Chapters,Chapters_Read
-Genesis,50,50
-Exodus,40,40
-Leviticus,27,27
-Numbers,36,36
-Deuteronomy,34,34
-Joshua,24,0
-Judges,21,0
-Ruth,4,0
-1 Samuel,31,0
-2 Samuel,24,0
-1 Kings,22,0
-2 Kings,25,0
-1 Chronicles,29,0
-2 Chronicles,36,0
-Ezra,10,0
-Nehemiah,13,0
-Esther,10,0
-Job,42,0
-Psalms,150,0
-Proverbs,31,0
-Ecclesiastes,12,0
-Song of Solomon,8,0
-Isaiah,66,0
-Jeremiah,52,0
-Lamentations,5,0
-Ezekiel,48,0
-Daniel,12,0
-Hosea,14,0
-Joel,3,0
-Amos,9,0
-Obadiah,1,0
-Jonah,4,0
-Micah,7,0
-Nahum,3,0
-Habakkuk,3,0
-Zephaniah,3,0
-Haggai,2,0
-Zechariah,14,0
-Malachi,4,0
-Matthew,28,0
-Mark,16,0
-Luke,24,0
-John,21,0
-Acts,28,0
-Romans,16,0
-1 Corinthians,16,0
-2 Corinthians,13,0
-Galatians,6,0
-Ephesians,6,0
-Philippians,4,0
-Colossians,4,0
-1 Thessalonians,5,0
-2 Thessalonians,3,0
-1 Timothy,6,0
-2 Timothy,4,0
-Titus,3,0
-Philemon,1,0
-Hebrews,13,0
-James,5,0
-1 Peter,5,0
-2 Peter,3,0
-1 John,5,0
-2 John,1,0
-3 John,1,0
-Jude,1,0
-Revelation,22,0
+Book,Total_Chapters,Chapters_Read,Last_Updated
+Genesis,50,50,Never
+Exodus,40,40,Never
+Leviticus,27,27,Never
+Numbers,36,36,Never
+Deuteronomy,34,34,Never
+Joshua,24,24,2026-02-12 17:54
+Judges,21,21,2026-02-17 17:45
+Ruth,4,4,2026-02-17 17:45
+1 Samuel,31,31,2026-02-23 18:00
+2 Samuel,24,24,2026-02-28 10:58
+1 Kings,22,22,2026-03-04 18:30
+2 Kings,25,5,2026-03-05 18:01
+1 Chronicles,29,0,Never
+2 Chronicles,36,0,Never
+Ezra,10,0,Never
+Nehemiah,13,0,Never
+Esther,10,0,Never
+Job,42,0,Never
+Psalms,150,0,Never
+Proverbs,31,0,Never
+Ecclesiastes,12,0,Never
+Song of Solomon,8,0,Never
+Isaiah,66,0,Never
+Jeremiah,52,0,Never
+Lamentations,5,0,Never
+Ezekiel,48,0,Never
+Daniel,12,0,Never
+Hosea,14,0,Never
+Joel,3,0,Never
+Amos,9,0,Never
+Obadiah,1,0,Never
+Jonah,4,0,Never
+Micah,7,0,Never
+Nahum,3,0,Never
+Habakkuk,3,0,Never
+Zephaniah,3,0,Never
+Haggai,2,0,Never
+Zechariah,14,0,Never
+Malachi,4,0,Never
+Matthew,28,0,Never
+Mark,16,0,Never
+Luke,24,0,Never
+John,21,0,Never
+Acts,28,0,Never
+Romans,16,0,Never
+1 Corinthians,16,0,Never
+2 Corinthians,13,0,Never
+Galatians,6,0,Never
+Ephesians,6,0,Never
+Philippians,4,0,Never
+Colossians,4,0,Never
+1 Thessalonians,5,0,Never
+2 Thessalonians,3,0,Never
+1 Timothy,6,0,Never
+2 Timothy,4,0,Never
+Titus,3,0,Never
+Philemon,1,0,Never
+Hebrews,13,0,Never
+James,5,0,Never
+1 Peter,5,0,Never
+2 Peter,3,0,Never
+1 John,5,0,Never
+2 John,1,0,Never
+3 John,1,0,Never
+Jude,1,0,Never
+Revelation,22,0,Never
