@@ -2,149 +2,134 @@ import streamlit as st
 import pandas as pd
 import os
 from datetime import datetime
+import plotly.express as px
 
 # --- CONFIG ---
 CANONICAL_FILE = 'bible_canonical_progress.csv'
-SESSION_FILE = 'last_session.csv'
+
+# 1. INITIALIZE SESSION STATE (Persistence & Celebration)
+# Ensuring the app remembers your last selected book after saving
+if 'celebrate' not in st.session_state:
+    st.session_state.celebrate = False
+
+if 'active_book' not in st.session_state:
+    st.session_state.active_book = 'Genesis'
 
 
+@st.cache_data
 def load_canonical_data():
-    """Loads progress data or initializes a new Bible structure."""
-    if os.path.exists(CANONICAL_FILE) and os.path.getsize(CANONICAL_FILE) > 0:
+    """Loads the bible progress data and ensures the Pct column exists."""
+    if os.path.exists(CANONICAL_FILE):
         df = pd.read_csv(CANONICAL_FILE)
-        # Ensure the Last_Updated column exists in older files
-        if 'Last_Updated' not in df.columns:
-            df['Last_Updated'] = "Never"
+        # Calculate completion percentage for the metrics and audit table
+        df['Pct'] = (df['Chapters_Read'] / df['Total_Chapters'] * 100).round(1)
         return df
-
-    # Initialize full Bible structure
-    data = {
-        'Book': [
-            'Genesis', 'Exodus', 'Leviticus', 'Numbers', 'Deuteronomy',
-            'Joshua', 'Judges', 'Ruth', '1 Samuel', '2 Samuel',
-            '1 Kings', '2 Kings', '1 Chronicles', '2 Chronicles', 'Ezra',
-            'Nehemiah', 'Esther', 'Job', 'Psalms', 'Proverbs',
-            'Ecclesiastes', 'Song of Solomon', 'Isaiah', 'Jeremiah', 'Lamentations',
-            'Ezekiel', 'Daniel', 'Hosea', 'Joel', 'Amos',
-            'Obadiah', 'Jonah', 'Micah', 'Nahum', 'Habakkuk',
-            'Zephaniah', 'Haggai', 'Zechariah', 'Malachi', 'Matthew',
-            'Mark', 'Luke', 'John', 'Acts', 'Romans',
-            '1 Corinthians', '2 Corinthians', 'Galatians', 'Ephesians', 'Philippians',
-            'Colossians', '1 Thessalonians', '2 Thessalonians', '1 Timothy', '2 Timothy',
-            'Titus', 'Philemon', 'Hebrews', 'James', '1 Peter',
-            '2 Peter', '1 John', '2 John', '3 John', 'Jude', 'Revelation'
-        ],
-        'Total_Chapters': [
-            50, 40, 27, 36, 34, 24, 21, 4, 31, 24,
-            22, 25, 29, 36, 10, 13, 10, 42, 150, 31,
-            12, 8, 66, 52, 5, 48, 12, 14, 3, 9,
-            1, 4, 7, 3, 3, 3, 2, 14, 4, 28,
-            16, 24, 21, 28, 16, 16, 13, 6, 6, 4,
-            4, 5, 3, 6, 4, 3, 1, 13, 5, 5,
-            3, 5, 1, 1, 1, 22
-        ],
-        'Chapters_Read': [0] * 66,
-        'Last_Updated': ["Never"] * 66
-    }
-    df = pd.DataFrame(data)
-    df.to_csv(CANONICAL_FILE, index=False)
-    return df
-
-
-def get_last_session():
-    """Retrieves the last book and chapter modified from disk."""
-    if os.path.exists(SESSION_FILE):
-        return pd.read_csv(SESSION_FILE).iloc[0].to_dict()
-    return {'Book': 'Genesis', 'Chapter': 0}
-
-
-def save_session(book, chapter):
-    """Saves current state to disk to persist across app restarts."""
-    pd.DataFrame([{'Book': book, 'Chapter': chapter}]).to_csv(SESSION_FILE, index=False)
+    return pd.DataFrame()
 
 
 # --- APP START ---
-st.set_page_config(page_title="Bible Tracker", layout="wide")
-st.title("📚 Bible Progress Tracker")
+st.set_page_config(page_title="Canonical Progress", layout="wide")
+st.title("📚 Canonical Progress Dashboard")
 
 df_canon = load_canonical_data()
-last_session_data = get_last_session()
 
-# Initialize Session State for the active book if not already set
-if 'active_book' not in st.session_state:
-    st.session_state.active_book = last_session_data['Book']
+if not df_canon.empty:
+    # 2. OVERALL ANALYTICS
+    total_ch = df_canon['Total_Chapters'].sum()
+    read_ch = df_canon['Chapters_Read'].sum()
+    overall_pct = (read_ch / total_ch) * 100
 
-# --- OVERALL PROGRESS METRICS ---
-total_chapters_bible = df_canon['Total_Chapters'].sum()
-read_chapters_bible = df_canon['Chapters_Read'].sum()
-overall_pct = (read_chapters_bible / total_chapters_bible) * 100
+    m1, m2, m3 = st.columns(3)
+    m1.metric("Total Bible Completion", f"{overall_pct:.1f}%")
+    m2.metric("Chapters Read", f"{read_ch:,} / {total_ch:,}")
+    m3.metric("Books Finished", len(df_canon[df_canon['Chapters_Read'] == df_canon['Total_Chapters']]))
+    st.progress(overall_pct / 100)
 
-m_col1, m_col2 = st.columns(2)
-m_col1.metric("Overall Completion", f"{overall_pct:.1f}%")
-m_col2.metric("Chapters Read", f"{read_chapters_bible} / {total_chapters_bible}")
-st.progress(overall_pct / 100)
+    # 3. THE VISUAL PROGRESS CHART (Relative Sizing)
+    # This chart shows book size (volume) rather than a 100% stacked view
+    st.subheader("🗺️ Scripture Completion Map (Relative Scale)")
 
-st.markdown("---")
+    df_visual = df_canon.copy()
+    df_visual['Pending_Chapters'] = df_visual['Total_Chapters'] - df_visual['Chapters_Read']
 
-# --- INTERACTIVE UPDATE SECTION ---
-col1, col2 = st.columns([1, 2])
-
-with col1:
-    book_list = list(df_canon['Book'].unique())
-    try:
-        # Find index of current active book to keep the selectbox stable
-        default_index = book_list.index(st.session_state.active_book)
-    except ValueError:
-        default_index = 0
-
-    selected_book = st.selectbox(
-        "Choose a Book",
-        book_list,
-        index=default_index,
-        key="book_picker"
+    # Melt data to "Long" format for Plotly stacking
+    df_long = df_visual.melt(
+        id_vars=['Book'],
+        value_vars=['Chapters_Read', 'Pending_Chapters'],
+        var_name='Chapter_Status',
+        value_name='Chapter_Count'
     )
+    df_long['Chapter_Status'] = df_long['Chapter_Status'].replace({
+        'Chapters_Read': 'Completed',
+        'Pending_Chapters': 'Pending'
+    })
 
-    # Sync internal state with widget selection
-    st.session_state.active_book = selected_book
+    fig_map = px.bar(
+        df_long, x='Book', y='Chapter_Count', color='Chapter_Status',
+        color_discrete_map={'Completed': '#28a745', 'Pending': '#e0e0e0'},
+        template="plotly_white",
+        height=450
+    )
+    fig_map.update_layout(
+        xaxis_tickangle=-45,
+        yaxis_title="Total Chapters",
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+    )
+    st.plotly_chart(fig_map, use_container_width=True)
 
-with col2:
-    book_row = df_canon[df_canon['Book'] == selected_book].iloc[0]
-    current_chapters = int(book_row['Chapters_Read'])
-    total_chapters = int(book_row['Total_Chapters'])
+    st.divider()
 
-    # Set slider start value: use session file value ONLY if the book matches
-    # Otherwise, use the actual read count from the main dataframe
-    if selected_book == last_session_data['Book']:
-        slider_start = last_session_data['Chapter']
-    else:
-        slider_start = current_chapters
+    # 4. PERSISTENT INTERACTIVE UPDATE SECTION
+    c1, c2 = st.columns([1, 2])
 
-    new_val = st.slider(f"Progress for {selected_book}", 0, total_chapters, slider_start)
+    with c1:
+        book_options = list(df_canon['Book'].unique())
+        try:
+            # Prevents the selector from jumping back to Genesis after a save
+            current_index = book_options.index(st.session_state.active_book)
+        except ValueError:
+            current_index = 0
 
-    if st.button(f"Save Progress for {selected_book}", type="primary"):
-        # 1. Update Main Dataframe
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
-        df_canon.loc[df_canon['Book'] == selected_book, 'Chapters_Read'] = new_val
-        df_canon.loc[df_canon['Book'] == selected_book, 'Last_Updated'] = timestamp
-        df_canon.to_csv(CANONICAL_FILE, index=False)
+        selected_book = st.selectbox(
+            "Select Book to Update",
+            book_options,
+            index=current_index
+        )
+        st.session_state.active_book = selected_book
+        book_row = df_canon[df_canon['Book'] == selected_book].iloc[0]
 
-        # 2. Update Persistence File
-        save_session(selected_book, new_val)
+    with c2:
+        total_book_ch = int(book_row['Total_Chapters'])
+        current_book_ch = int(book_row['Chapters_Read'])
 
-        # 3. Success Feedback & Refresh
-        st.success(f"Successfully updated {selected_book} to {new_val} chapters!")
-        st.rerun()
+        new_val = st.slider(f"Current Progress for {selected_book}", 0, total_book_ch, current_book_ch)
 
-# --- DATA SUMMARY TABLE ---
-st.markdown("---")
-st.subheader("Detailed Progress")
+        if st.button(f"Save {selected_book} Progress", type="primary", use_container_width=True):
+            # Daily Timestamp: Refreshes whenever progress is logged
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
 
-# Add percentage column for the table view
-df_canon['Completion %'] = (df_canon['Chapters_Read'] / df_canon['Total_Chapters'] * 100).round(1)
+            df_canon.loc[df_canon['Book'] == selected_book, 'Chapters_Read'] = new_val
+            df_canon.loc[df_canon['Book'] == selected_book, 'Last_Updated'] = timestamp
 
-# We removed the 'df_sorted' line to keep your original Bible order!
-st.dataframe(
-    df_canon[['Book', 'Chapters_Read', 'Total_Chapters', 'Completion %', 'Last_Updated']],
-    hide_index=True,
-    use_container_width=True
-)
+            df_canon.to_csv(CANONICAL_FILE, index=False)
+
+            # Milestone check for celebratory effects
+            if new_val == total_book_ch and current_book_ch < total_book_ch:
+                st.session_state.celebrate = True
+
+            st.cache_data.clear()
+            st.success(f"Log Updated: {selected_book} at {new_val} chapters.")
+            st.rerun()
+
+    # 5. DETAILED DATA AUDIT
+    st.divider()
+    with st.expander("📂 View Detailed Canonical Audit"):
+        st.dataframe(
+            df_canon[['Book', 'Chapters_Read', 'Total_Chapters', 'Pct', 'Last_Updated']],
+            column_config={
+                "Pct": st.column_config.ProgressColumn("Progress", format="%.1f%%", min_value=0, max_value=100)
+            },
+            use_container_width=True, hide_index=True
+        )
+else:
+    st.error(f"⚠️ {CANONICAL_FILE} not found. Please ensure it is in the project root.")

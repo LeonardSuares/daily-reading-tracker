@@ -2,112 +2,147 @@ import streamlit as st
 import pandas as pd
 import datetime
 import plotly.graph_objects as go
-import os
+from pathlib import Path
 
-# --- PATHS ---
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-# Note: Since this is in /pages, we go up one level for the CSVs
-DATA_FILE = os.path.join(os.path.dirname(BASE_DIR), 'bible_plan.csv')
-PROGRESS_FILE = os.path.join(os.path.dirname(BASE_DIR), 'user_progress.csv')
+# 1. ROBUST PATHING
+# Pathlib is the modern standard for Senior Developers
+BASE_DIR = Path(__file__).resolve().parent.parent
+DATA_FILE = BASE_DIR / 'bible_reading_plan.csv'  # Keeping your CSV preference
+PROGRESS_FILE = BASE_DIR / 'user_progress.csv'
 START_DATE = datetime.date(2026, 1, 1)
 
-def load_data():
-    if not os.path.exists(DATA_FILE):
-        st.error(f"File not found: {DATA_FILE}")
-        st.stop()
-    try:
-        if not os.path.exists(PROGRESS_FILE):
-            plan_df = pd.read_csv(DATA_FILE, sep='*')
-            plan_df['Completed'] = False
-            plan_df['Date_Completed'] = None
-            plan_df.to_csv(PROGRESS_FILE, index=False)
-            return plan_df
-        return pd.read_csv(PROGRESS_FILE)
-    except Exception as e:
-        st.error(f"Error: {e}"); st.stop()
 
-# ... Rest of your Weekly logic here ...
+@st.cache_data
+def load_weekly_data():
+    if not DATA_FILE.exists():
+        st.error(f"Master plan not found at {DATA_FILE}")
+        return pd.DataFrame()
+
+    if PROGRESS_FILE.exists():
+        # Load existing progress
+        df_progress = pd.read_csv(PROGRESS_FILE)
+        # Handle case-sensitivity if necessary
+        if 'Passage' not in df_progress.columns and 'Reading Range' in df_progress.columns:
+            df_progress = df_progress.rename(columns={'Reading Range': 'Passage'})
+        return df_progress
+
+    # INITIALIZATION LOGIC
+    # If progress file doesn't exist, we create it from the daily plan
+    daily_df = pd.read_csv(DATA_FILE)
+
+    # 1. Create the Week index
+    daily_df['Week'] = (daily_df['Day'] - 1) // 7 + 1
+
+    # 2. Group by week and aggregate the Passage column
+    # This creates a string like "Genesis 1-7" for each week
+    weekly_df = daily_df.groupby('Week').agg({
+        'Passage': lambda x: f"{x.iloc[0].split()[0]} {x.iloc[0].split()[-1]}-{x.iloc[-1].split()[-1]}",
+        'Status': lambda x: (x == 'Read').all()  # Auto-check if all 7 days are 'Read'
+    }).reset_index()
+
+    weekly_df = weekly_df.rename(columns={'Status': 'Completed'})
+    weekly_df.to_csv(PROGRESS_FILE, index=False)
+    return weekly_df
 
 
-def save_progress(df):
-    df.to_csv(PROGRESS_FILE, index=False)
+# --- UI INITIALIZATION ---
+st.title("📊 Weekly Burndown Analytics")
+df = load_weekly_data()
 
-
-# Load data into session state
-if 'df' not in st.session_state:
-    st.session_state.df = load_data()
-
-df = st.session_state.df
-
-# --- DASHBOARD HEADER ---
-st.title("📖 52-Week Bible Tracker")
-today = datetime.date.today()
-
-# Logic check: If today is before start date, don't show negative days
-if today < START_DATE:
-    st.warning("You haven't started yet! The clock starts Jan 1.")
-    day_of_year = 0
-    current_week = 0
-else:
+if not df.empty:
+    # 2. TEMPORAL LOGIC
+    today = datetime.date.today()
     day_of_year = (today - START_DATE).days + 1
-    current_week = (day_of_year // 7) + 1
+    current_week = max(0, (day_of_year // 7) + 1)
 
-# Calculate metrics
-total_weeks = 52
-completed_weeks = df['Completed'].sum()
-progress_pct = completed_weeks / total_weeks
+    # 3. METRIC CALCULATION
+    total_weeks = 52
+    completed_weeks = df['Completed'].sum()
+    pace_status = "On Track" if completed_weeks >= current_week - 1 else "Behind"
 
-# --- KPI ROW ---
-col1, col2, col3 = st.columns(3)
-col1.metric("Current Week", f"Week {current_week}", f"Day {day_of_year}")
-col2.metric("Progress", f"{completed_weeks} / {total_weeks}", f"{int(progress_pct * 100)}%")
-col3.metric("Status", "On Track" if completed_weeks >= current_week - 1 else "Behind",
-            delta_color="normal" if completed_weeks >= current_week - 1 else "inverse")
+    m1, m2, m3 = st.columns(3)
+    m1.metric("Current Week", f"Week {current_week}", f"Day {day_of_year}")
+    m2.metric("Completion", f"{completed_weeks}/{total_weeks}", f"{int((completed_weeks / 52) * 100)}%")
+    m3.metric("Pace Analysis", pace_status,
+              delta=int(completed_weeks - (current_week - 1)),
+              delta_color="normal" if pace_status == "On Track" else "inverse")
 
-st.progress(progress_pct)
+    st.divider()
 
-# --- THE TRACKER ---
-st.subheader("Weekly Checklist")
+    # --- ANALYTICS: PROJECTED VS. ACTUAL ---
+    st.subheader("📉 Strategy: Projected Target vs. Actual Pace")
 
-with st.form("tracker_form"):
-    for index, row in df.iterrows():
-        week_num = row['Week']
-        # Handle cases where columns might be read as different types
-        reading = str(row['Reading Range'])
-        focus = str(row['Focus'])
+    # 1. Generate the time-based target
+    weeks = list(range(1, 53))
+    # Vectorized cumulative sum for actual progress
+    actual_series = df.sort_values('Week')['Completed'].astype(int).cumsum().tolist()
+    actual_series += [actual_series[-1]] * (52 - len(actual_series))
 
-        label = f"**Wk {week_num}**: {reading} ({focus})"
-        is_checked = st.checkbox(label, value=bool(row['Completed']), key=f"chk_{week_num}")
+    # 2. Calculate the 'Required' point based on today's date
+    today = datetime.date.today()
+    days_into_year = (today - START_DATE).days + 1
+    target_week = min(52, max(0, (days_into_year // 7) + 1))
 
-        df.at[index, 'Completed'] = is_checked
-        if is_checked and not row['Completed']:
-            df.at[index, 'Date_Completed'] = str(datetime.date.today())
+    fig = go.Figure()
 
-    submitted = st.form_submit_button("Update Progress")
-    if submitted:
-        save_progress(df)
-        st.success("Progress Saved!")
+    # --- TRACE 1: IDEAL PACE LINE ---
+    fig.add_trace(go.Scatter(
+        x=weeks, y=weeks,
+        mode='lines', name='Ideal Annual Pace',
+        line=dict(color='rgba(150, 150, 150, 0.3)', dash='dash')
+    ))
+
+    # --- TRACE 2: ACTUAL PROGRESS (WITH FILL) ---
+    fig.add_trace(go.Scatter(
+        x=weeks, y=actual_series,
+        mode='lines+markers', name='Actual Progress',
+        fill='tozeroy', fillcolor='rgba(0, 123, 255, 0.1)',
+        line=dict(color='#007BFF', width=3)
+    ))
+
+    # --- TRACE 3: CURRENT PROJECTED TARGET (Vertical Marker) ---
+    fig.add_vline(
+        x=target_week,
+        line_width=2,
+        line_dash="dot",
+        line_color="red",
+        annotation_text=f"Today: Week {target_week}",
+        annotation_position="top left"
+    )
+
+    # Highlight the 'Target' point on the Ideal Line
+    fig.add_trace(go.Scatter(
+        x=[target_week], y=[target_week],
+        mode='markers',
+        name='Projected Requirement',
+        marker=dict(color='red', size=12, symbol='star')
+    ))
+
+    fig.update_layout(
+        hovermode="x unified",
+        xaxis=dict(title="Week Number", dtick=4),
+        yaxis=dict(title="Weeks Completed", range=[0, 52]),
+        margin=dict(l=0, r=0, t=40, b=0),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
+
+    # 5. INTERACTIVE CHECKLIST
+    st.divider()
+    st.subheader("Weekly Milestone Checklist")
+
+    # Use a data editor for mass-updates - much faster than a form with 52 checkboxes
+    edited_df = st.data_editor(
+        df[['Week', 'Passage', 'Completed']],
+        key="weekly_editor",
+        hide_index=True,
+        disabled=['Week', 'Passage'],
+        use_container_width=True
+    )
+
+    if st.button("Save Weekly Progress", use_container_width=True):
+        edited_df.to_csv(PROGRESS_FILE, index=False)
+        st.cache_data.clear()
+        st.success("Milestones updated and synced with Daily Tracker.")
         st.rerun()
-
-# --- ANALYTICS ---
-st.divider()
-st.subheader("Burndown Chart")
-
-weeks = list(range(1, 53))
-ideal_progress = weeks
-actual_progress = []
-
-running_total = 0
-for w in weeks:
-    # Ensure we don't crash if week index is out of bounds
-    if w <= len(df) and df.iloc[w - 1]['Completed']:
-        running_total += 1
-    actual_progress.append(running_total)
-
-fig = go.Figure()
-fig.add_trace(
-    go.Scatter(x=weeks, y=ideal_progress, mode='lines', name='Ideal Pace', line=dict(dash='dash', color='gray')))
-fig.add_trace(
-    go.Scatter(x=weeks, y=actual_progress, mode='lines+markers', name='Actual Progress', line=dict(color='blue')))
-fig.update_layout(title="Ideal vs. Actual Completion", xaxis_title="Week", yaxis_title="Weeks Completed")
-st.plotly_chart(fig)
