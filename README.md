@@ -3,37 +3,46 @@
 **Live Application:** [View on Streamlit Cloud](https://daily-reading-tracker-fzdldtbjb6ybskw6rjdhdm.streamlit.app/)
 
 ## 📖 Project Overview
-A utility-focused application built to transform personal habits into quantifiable data. This project serves as a comprehensive reading tracker using Python, Pandas, and Streamlit, emphasizing data persistence, logic-based tracking, and specialized data serialization.
+The **2026 Scripture Command Center** is a high-resolution operational dashboard built to transform personal habits into quantifiable data. This project synthesizes **Python, Pandas, and Plotly** to provide a three-tier tracking system—daily, weekly, and canonical—to maintain an active engagement loop with 365-day spiritual discipline goals.
 
-Standard reading plans are often passive. This solution provides a two-tier tracking system—daily and weekly—to create an active engagement loop with personal reading goals.
+---
+
+## 🚀 Key Features
+
+* **Dynamic KPI Dashboard:** Real-time calculation of current streaks, annual completion percentages, and daily velocity (chapters/day).
+* **Predictive Forecasting:** A custom **Velocity Engine** that applies historical reading behavior to project a "Projected Finish Date".
+* **Weekly Burndown Analytics:** Interactive Plotly visualizations comparing **Ideal vs. Actual** pace with dynamic time-based targets.
+* **Canonical Heatmapping:** A relative-scale bar chart identifying volume-based progress across all 66 books, highlighting reading gaps by actual volume (total chapters).
+* **Relational Data Sync:** Automated logic that propagates daily progress into weekly milestones to ensure cross-module data integrity.
+* **Stateful Persistence:** Implementation of **Streamlit Session State** to maintain user context (e.g., active book selection) across app reruns.
 
 ---
 
 ## 🛠️ Technical Highlights
 
-### Data Persistence
-Managed via a **CRUD-capable CSV backend**, ensuring that all progress is saved locally or in the cloud without the need for a complex SQL setup. This highlights efficient data handling and file I/O operations.
+### 📈 Analytics & Modeling
+* **Gaps and Islands Logic:** Developed a custom algorithm to calculate contiguous reading chains, ensuring streak accuracy.
+* **Vectorized Processing:** Optimized data calculations using Pandas `.cumsum()` and `.melt()` for instantaneous UI response times.
 
-### Logic-Based Streaks
-Implemented a **"Gaps and Islands" algorithm** to calculate contiguous reading chains.
-* **Automatic Reset:** The streak resets automatically if a 24-hour window is missed.
-* **Algorithmic Complexity:** Leverages Pandas indexing to identify islands of activity within a sea of missing entries.
+### 🔄 State Management
+* **Selection Persistence:** Engineered a "Persistence Engine" to solve the "Genesis Revert" issue, ensuring user selection remains stable during data writes.
+* **Daily Timestamps:** Automated record-keeping that logs activity timestamps on a per-interaction basis.
 
-### Dashboarding & Visualization
-Integrated **Matplotlib** and **Streamlit** to provide real-time visual feedback:
-* **Progress Tracking:** Interactive progress bars for individual books and overall completion.
-* **Catch-up Analysis:** Data-driven insights to help users identify how many chapters are needed to return to a specific goal.
+### 🎨 Advanced Visualization
+* **Event-Driven UX:** Integrated celebratory firecracker animations using `streamlit-extras` to provide visual reinforcement for habit completion.
+* **Relative Scale Mapping:** Designed a scripture map that scales by volume, providing a true representation of workload (e.g., Psalms vs. Obadiah).
 
 ---
 
 ## 📂 Project Structure
 ```text
 Daily-Reading-Tracker/
-├── bible_canonical_progress.csv  # Main database for reading logs
-├── last_session.csv              # Session persistence metadata
-├── main.py                       # Streamlit application logic
-└── requirements.txt               # Dependencies (Pandas, Streamlit, etc.)
-
-```
-## 📄 License
-This project is licensed under the **MIT License**. This means you are free to use, modify, and distribute the code, provided that the original copyright notice and permission notice are included. See the `LICENSE` file for more details.
+├── Home.py                       # Executive Dashboard & Predictive KPIs
+├── bible_reading_plan.csv         # Master Daily Source-of-Truth
+├── user_progress.csv              # Weekly Analytics Database
+├── last_session.csv               # Session Persistence Metadata
+├── requirements.txt               # Dependencies (Pandas, Plotly, Streamlit-Extras)
+└── pages/                         # Specialized Analytical Modules
+    ├── 1_Daily_Tracker.py         # Logging & Catch-up Engine
+    ├── 2_Weekly_Tracker.py        # Burndown & Pace Analysis
+    └── 3_Canonical_Progress.py    # Volume-Based Heatmap
