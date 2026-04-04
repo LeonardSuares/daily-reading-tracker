@@ -1,53 +1,54 @@
 Week,Passage,Completed
-1,Genesis 1 – 23,True
-2,Genesis 24 – 46,True
-3,Genesis 47 – Exodus 18,True
-4,Exodus 19 – 40,True
-5,Leviticus 1 – 23,True
-6,Leviticus 24 – Numbers 13,True
-7,Numbers 14 – 36,True
-8,Deuteronomy 1 – 23,True
-9,Deuteronomy 24 – Joshua 15,True
-10,Joshua 16 – Judges 8,True
-11,Judges 9 – 1 Samuel 3,True
-12,1 Samuel 4 – 26,True
-13,1 Samuel 27 – 2 Samuel 18,True
-14,2 Samuel 19 – 1 Kings 16,True
-15,1 Kings 17 – 2 Kings 15,True
-16,2 Kings 16 – 1 Chronicles 17,True
-17,1 Chronicles 18 – 2 Chronicles 16,False
-18,2 Chronicles 17 – Ezra 10,False
-19,Nehemiah 1 – Esther 10,False
-20,Job 1 – 31,False
-21,Job 32 – Psalms 17,False
-22,Psalms 18 – 41,False
-23,Psalms 42 – 72,False
-24,Psalms 73 – 100,False
-25,Psalms 101 – 134,False
-26,Psalms 135 – Proverbs 6,False
-27,Proverbs 7 – 29,False
-28,Proverbs 30 – Isaiah 6,False
-29,Isaiah 7 – 30,False
-30,Isaiah 31 – 54,False
-31,Isaiah 55 – Jeremiah 13,False
-32,Jeremiah 14 – 36,False
-33,Jeremiah 37 – Lamentations 5,False
-34,Ezekiel 1 – 23,False
-35,Ezekiel 24 – 46,False
-36,Ezekiel 47 – Hosea 14,False
-37,Joel 1 – Jonah 4,False
-38,Micah 1 – Zephaniah 3,False
-39,Haggai 1 – Malachi 4,False
-40,Matthew 1 – 23,False
-41,Matthew 24 – Mark 11,False
-42,Mark 12 – Luke 11,False
-43,Luke 12 – John 5,False
-44,John 6 – Acts 2,False
-45,Acts 3 – 25,False
-46,Acts 26 – Romans 13,False
-47,Romans 14 – 1 Corinthians 16,False
-48,2 Corinthians 1 – Ephesians 6,False
-49,Philippians 1 – 2 Thessalonians 3,False
-50,1 Timothy 1 – Hebrews 9,False
-51,Hebrews 10 – 1 Peter 5,False
-52,2 Peter 1 – Revelation 22,False
+1,Genesis 1 — 22,True
+2,Genesis 26 — 48,True
+3,Exodus 1 — 23,True
+4,Exodus 27 — Leviticus 9,True
+5,Leviticus 12 — Numbers 7,True
+6,Numbers 11 — 33,True
+7,Numbers 36 - Deuteronomy 3 — Deuteronomy 22,True
+8,Deuteronomy 26 — Joshua 14,True
+9,Joshua 17 — Judges 15,True
+10,Judges 19 — 1 Samuel 16,True
+11,1 Samuel 19 — 2 Samuel 10,True
+12,2 Samuel 14 — 1 Kings 11,True
+13,1 Kings 15 — 2 Kings 15,True
+14,2 Kings 19 — 1 Chronicles 15,True
+15,1 Chronicles 19 — 2 Chronicles 12,True
+16,2 Chronicles 16 — Ezra 1,True
+17,Ezra 5 — Tobit 4,True
+18,Tobit 7 — Judith 15 - Esther 2,True
+19,Esther 3 — 1 Maccabees 15 - 2 Maccabees 1,True
+20,2 Maccabees 2 — Job 9,True
+21,Job 13 — 35,True
+22,Job 38 — Psalms 18,False
+23,Psalms 22 — 44,False
+24,Psalms 47 — 69,False
+25,Psalms 73 — 95,False
+26,Psalms 98 — 120,False
+27,Psalms 124 — 146,False
+28,Psalms 149 - Proverbs 2 — Proverbs 21,False
+29,Proverbs 25 — Song of Solomon 3,False
+30,Song of Solomon 7 - Wisdom 2 — Sirach 2,False
+31,Sirach 6 — 27,False
+32,Sirach 31 — Isaiah 2,False
+33,Isaiah 5 — 27,False
+34,Isaiah 31 — 53,False
+35,Isaiah 56 — Jeremiah 12,False
+36,Jeremiah 16 — 38,False
+37,Jeremiah 41 — Baruch 6 - Ezekiel 3,False
+38,Ezekiel 4 — 26,False
+39,Ezekiel 29 — Daniel 3,False
+40,Daniel 7 — Joel 1,False
+41,Amos 1 — Nahum 2 - Habakkuk 2,False
+42,Habakkuk 3 - Zephaniah 2 — Malachi 3 - Matthew 1,False
+43,Matthew 2 — 24,False
+44,Matthew 28 - Mark 2 — Luke 5,False
+45,Luke 9 — John 7,False
+46,John 11 — Acts 11,False
+47,Acts 15 — Romans 9,False
+48,Romans 13 — 2 Corinthians 2,False
+49,2 Corinthians 6 — Philippians 3 - Colossians 1,False
+50,Colossians 2 - 1 Thessalonians 1 — Titus 2 - Hebrews 1,False
+51,Hebrews 2 — 2 Peter 1,False
+52,1 John 1 — Revelation 15,False
+53,Revelation 19 — 19,False

@@ -6,10 +6,9 @@ from datetime import datetime, timedelta
 # 1. Page Configuration
 st.set_page_config(page_title="Daily Reading Tracker", layout="wide", page_icon="📖")
 
-# 2. Pathing & Sync Logic
+# --- 2. PATHING & SYNC LOGIC (MATCHED TO WEEKLY TRACKER) ---
 FILENAME = 'bible_reading_plan.csv'
-# Using os.path.join for robust cross-platform pathing
-WEEKLY_FILE = os.path.join('data', 'user_progress.csv')
+WEEKLY_FILE = 'user_progress.csv'  # Removed os.path.join('data'...) to sync correctly
 
 
 def sync_weekly_progress(daily_df):
@@ -21,8 +20,12 @@ def sync_weekly_progress(daily_df):
 
         for week_num in weekly_df['Week']:
             days_in_week = daily_df[daily_df['Day_Group'] == week_num]
+            # Only mark as completed if all 7 days in that group are 'Read'
             if not days_in_week.empty and (days_in_week['Status'] == 'Read').all():
                 weekly_df.loc[weekly_df['Week'] == week_num, 'Completed'] = True
+            else:
+                # If a day was unmarked, ensure the week reflects that too
+                weekly_df.loc[weekly_df['Week'] == week_num, 'Completed'] = False
 
         weekly_df.to_csv(WEEKLY_FILE, index=False)
 
@@ -74,14 +77,19 @@ else:
     current_streak = calculate_streak(df)
 
     # Calculate if you are ahead or behind schedule
-    days_passed = (datetime.now() - pd.to_datetime(df['Date'].min())).days + 1
+    # Using today's date vs start date to see where you SHOULD be
+    start_date = pd.to_datetime(df['Date'].min())
+    days_passed = (datetime.now() - start_date).days + 1
     pace_diff = completed - days_passed
 
     m1, m2, m3, m4 = st.columns(4)
     m1.metric("Completed Days", completed)
     m2.metric("Streak", f"{current_streak} Days", "🔥")
     m3.metric("Annual Progress", f"{progress_pct:.1f}%")
-    m4.metric("Pace vs. Calendar", f"{pace_diff} Days", delta_color="normal")
+
+    # Logic for Pace delta color
+    p_color = "normal" if pace_diff >= 0 else "inverse"
+    m4.metric("Pace vs. Calendar", f"{pace_diff} Days", delta=pace_diff, delta_color=p_color)
 
     st.progress(progress_pct / 100)
     st.divider()
@@ -114,7 +122,6 @@ else:
         missed = df[(df['Date'] < today_str) & (df['Status'] == 'Pending')]
         if not missed.empty:
             st.warning(f"Attention: {len(missed)} readings require catch-up.")
-            # Data editor for quick status updates
             edited_df = st.data_editor(
                 missed[['Day', 'Date', 'Passage', 'Status']],
                 hide_index=True,
@@ -122,7 +129,6 @@ else:
                 use_container_width=True
             )
             if st.button("Update Catch-up Progress"):
-                # Apply changes back to main df
                 for _, row in edited_df.iterrows():
                     df.loc[df['Day'] == row['Day'], 'Status'] = row['Status']
                 df.to_csv(FILENAME, index=False)
@@ -135,9 +141,8 @@ else:
 
     with tab3:
         st.subheader("2026 Master Reading Plan")
-        # Color coding the status for the big table
         st.dataframe(
-            df[['Day', 'Date', 'Passage', 'Status']].style.applymap(
+            df[['Day', 'Date', 'Passage', 'Status']].style.map(
                 lambda x: 'color: green' if x == 'Read' else 'color: red', subset=['Status']
             ),
             use_container_width=True,
