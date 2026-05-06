@@ -156,7 +156,7 @@ if not df_canon.empty:
 
     # --- AUDIT TABLE ---
     st.divider()
-    with st.expander("📂 View Detailed Canonical Audit"):
+    with st.expander("📂 View Detailed Canonical Audit."):
         st.dataframe(
             df_canon[['Book', 'Chapters_Read', 'Total_Chapters', 'Pct', 'Last_Updated']],
             column_config={"Pct": st.column_config.ProgressColumn("Progress", format="%.1f%%", min_value=0, max_value=100)},

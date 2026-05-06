@@ -192,4 +192,4 @@ if not df.empty:
         st.success("Milestones updated and synced with Progress File.")
         st.rerun()
 else:
-    st.error("⚠️ Master plan is empty or could not be loaded.")
+    st.error("⚠️ Master plan is empty or could not be loaded")
