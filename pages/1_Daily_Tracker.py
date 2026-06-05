@@ -115,7 +115,7 @@ else:
                 if st.button("Mark Assignment as Complete", use_container_width=True):
                     df.loc[df['Date'] == today_str, 'Status'] = 'Read'
                     df.to_csv(FILENAME, index=False)
-                    sync_weekly_progress(df)
+                    #sync_weekly_progress(df)
                     st.cache_data.clear()
                     st.rerun()
         else:
